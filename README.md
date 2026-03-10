@@ -63,82 +63,85 @@ For more information on using the Angular CLI, including detailed command refere
 ```mermaid
 graph TB
     Client(["👤 Client / Navigateur"])
-
-    subgraph EDGE["🌐 Couche d'entrée"]
-        GW["🔒 Gateway"]
-        LB["⚖️ Load Balancer"]
+    
+    subgraph PUBLIC["public subnet"]
+        subgraph US1["🖥️ Service (S3)"]
+            FE1["Frontend <br> (Angular)"]
+        end
     end
 
-    subgraph S1["🖥️ Serveur 1 (EC2)"]
-        FE1["🎨 Frontend <br> Interface utilisateur (Angular)"]
-        BE1["⚙️ Backend <br> API REST <br> (Node.js/NestJS)"]
+    subgraph PRIVE["private submet"]
+        subgraph EDGE[" "]
+            GW["Gateway"]
+            LB["Load Balancer"]
+        end
+        subgraph VS1["🖥️ Server 1 (EC2 AZ1)"]
+            BE1["Backend <br> (Node.js/NestJS)"]
+        end
+
+        subgraph VS2["🖥️ Server 2 (EC2 AZ2)"]
+            BE2["Backend <br> (Node.js/NestJS)"]
+            DB2["Primary Database <br> (PostgreSQL)"]
+        end
+
+        subgraph VS3["🖥️ Server 3 (EC2 AZ3)"]
+            DB3["Secondary Database (réplica) <br> (PostgreSQL)"]
+        end
+
+        subgraph STO["📦 Storage (S3)"]
+            CSTO["contracts pdf"]
+            BK["backups DB <br> (PostgreSQL)"]
+        end
     end
 
-    subgraph S2["🖥️ Serveur 2 (EC2)"]
-        BE2["⚙️ Backend <br> API REST <br> (Node.js/NestJS)"]
-        DB2["📀 Base de données Primary <br> (PostgreSQL)"]
-    end
 
-    subgraph S3["🖥️ Serveur 3 (EC2)"]
-        FE3["🎨 Frontend <br> Interface utilisateur (Angular)"]
-        DB3["📀 Base de données Secondary (réplica) <br> (PostgreSQL)"]
-    end
-
-    subgraph STO["📦 Stockage (S3)"]
-        CSTO["📝 Contrats pdf"]
-        BK["📀 Backups BDD <br> (PostgreSQL)"]
-    end
-
-    subgraph EXT["☁️ Services externes"]
-        DS["📝 API Signatures"]
-        DP["🔶 API Paiement"]
-        DA["🔒 API Auth"]
+    subgraph EXT["☁️ external service"]
+        DS["API Sign"]
+        DP["API payment"]
+        DA["API Auth"]
     end
 
 
-    Client -->|"HTTPS"| GW
+    Client -->|"HTTPS"| FE1
+    FE1 <-->|"HTTPS"| GW
     GW --> LB
-    LB --> FE1
     LB --> BE1
     LB --> BE2
-    LB --> FE3
 
-    FE1 <-->|"HTTP"| BE1
-    FE1 <-->|"HTTP"| BE2
-    FE3 <-->|"HTTP"| BE1
-    FE3 <-->|"HTTP"| BE2
-    BE1 <-->|"Lecture/Ecriture"| DB2
-    BE1 <-->|"Lecture"| DB3
+    BE1 <-->|"CRUD"| DB2
+    BE1 <-->|"read"| DB3
     BE1 <--> CSTO
-    BE2 <-->|"Lecture/Ecriture"| DB2
-    BE2 <-->|"Lecture"| DB3
+    BE2 <-->|"CRUD"| DB2
+    BE2 <-->|"read"| DB3
     BE2 <--> CSTO
     DB2 <-->|"Replica"| DB3
     DB3 --> BK
 
-    BE1 <--> DS
-    BE1 <--> DP
-    BE1 <--> DA
-    BE2 <--> DS
-    BE2 <--> DP
-    BE2 <--> DA
+    BE1 <--> EXT
+    BE2 <--> EXT
 
-    style EDGE fill:#1a1a2e,stroke:#4a9eff,color:#fff
-    style S1 fill:#16213e,stroke:#4ade80,color:#fff
-    style S2 fill:#16213e,stroke:#f59e0b,color:#fff
-    style S3 fill:#16213e,stroke:#a78bfa,color:#fff
-    style EXT fill:#1a1a2e,stroke:#f472b6,color:#fff
+    
+    style Client fill:#1a1a2e,stroke:#94a3b8,color:#fff
 
-    style GW fill:#1e3a5f,stroke:#4a9eff,color:#fff
-    style LB fill:#1e3a5f,stroke:#4a9eff,color:#fff
-    style FE1 fill:#14532d,stroke:#4ade80,color:#fff
-    style BE1 fill:#14532d,stroke:#4ade80,color:#fff
-    style BE2 fill:#78350f,stroke:#f59e0b,color:#fff
-    style DB2 fill:#78350f,stroke:#f59e0b,color:#fff
-    style FE3 fill:#3b0764,stroke:#a78bfa,color:#fff
-    style DB3 fill:#3b0764,stroke:#a78bfa,color:#fff
+    style PUBLIC fill:#183E0C,stroke:#A1FA4F,color:#fff
+    style US1 fill:#404040,stroke:#A1FA4F,color:#fff
+    style FE1 fill:#757427,stroke:#183E0C,color:#fff
+
+    style PRIVE fill:#3A0603,stroke:#EB3324,color:#fff
+    style EDGE fill:#404040,stroke:#EB3324,color:#fff
+    style GW fill:#1e3a5f,stroke:#3A0603,color:#fff
+    style LB fill:#1e3a5f,stroke:#3A0603,color:#fff
+    style VS1 fill:#404040,stroke:#EB3324,color:#fff
+    style BE1 fill:#78350F,stroke:#3A0603,color:#fff
+    style VS2 fill:#404040,stroke:#EB3324,color:#fff
+    style BE2 fill:#78350f,stroke:#3A0603,color:#fff
+    style DB2 fill:#3B0764,stroke:#3A0603,color:#fff
+    style VS3 fill:#404040,stroke:#EB3324,color:#fff
+    style DB3 fill:#3b0764,stroke:#3A0603,color:#fff
+    style STO fill:#404040,stroke:#EB3324,color:#fff
+
+    style EXT fill:#183E0C,stroke:#A1FA4F,color:#fff
     style DS fill:#831843,stroke:#f472b6,color:#fff
     style DP fill:#831843,stroke:#f472b6,color:#fff
     style DA fill:#831843,stroke:#f472b6,color:#fff
-    style Client fill:#1a1a2e,stroke:#94a3b8,color:#fff
 ```
